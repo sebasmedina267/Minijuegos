@@ -1,0 +1,67 @@
+.sudoku-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.tablero {
+  display: inline-block;
+  border: 4px solid var(--glass-border);
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.fila {
+  display: flex;
+}
+
+.celda {
+  width: 50px;
+  height: 50px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-main);
+  transition: all 0.3s;
+}
+
+.celda:focus {
+  outline: none;
+  background: var(--bg-accent);
+  border-color: var(--primary);
+}
+
+.celda.predefined {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.error-text {
+  color: var(--accent) !important;
+}
+
+/* líneas gruesas cada 3 filas */
+.fila:nth-child(3n) .celda {
+  border-bottom: 3px solid var(--glass-border);
+}
+
+/* líneas gruesas cada 3 columnas */
+.celda:nth-child(3n) {
+  border-right: 3px solid var(--glass-border);
+}
+
+.fila:last-child .celda {
+  border-bottom: none;
+}
+
+.celda:last-child {
+  border-right: none;
+}
+
+@media (max-width: 600px) {
+  .celda { width: 35px; height: 35px; font-size: 1rem; }
+}

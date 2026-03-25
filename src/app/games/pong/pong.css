@@ -1,0 +1,52 @@
+.game-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.difficulty-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.difficulty-buttons button {
+  padding: 12px 30px;
+  border-radius: var(--radius-lg);
+  font-weight: 700;
+  font-size: 1rem;
+  background: var(--bg-accent);
+  border: 1px solid var(--glass-border);
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+
+.difficulty-buttons button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.canvas-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #000;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .logo { font-size: 1.5rem; }
+}

@@ -1,0 +1,65 @@
+<div class="game-layout animate-fade-in">
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">2048 <span>🔢</span></h1>
+  </header>
+
+  <main class="game-card-flat">
+    <div class="status-hud">
+      <div class="status-item">
+        <span class="status-label">PUNTOS</span>
+        <span class="status-value">{{ score }}</span>
+      </div>
+
+      <div class="actions">
+
+        @if (!started) {
+          <button class="btn-primary" (click)="startGame()">START</button>
+        }
+
+        @if (started && !gameOver) {
+          <button class="btn-primary" (click)="togglePause()">
+            {{ paused ? 'RESUME' : 'PAUSE' }}
+          </button>
+        }
+
+        @if (gameOver) {
+          <button class="btn-primary" (click)="startGame()">RESET</button>
+        }
+
+      </div>
+    </div>
+
+    <div class="game-container-inner">
+      <div class="grid-2048" [class.paused]="paused">
+
+        @for (row of grid; let r = $index; track r) {
+          <div class="grid-row">
+
+            @for (tile of row; let c = $index; track c) {
+              <div
+                class="tile"
+                [attr.data-value]="tile.value"
+                [class.empty]="tile.value === 0"
+              >
+                {{ tile.value !== 0 ? tile.value : '' }}
+              </div>
+            }
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </main>
+
+  @if (gameOver) {
+    <div class="modal-overlay animate-fade-in">
+      <div class="modal-content glass">
+        <h2 class="modal-title">Fin del Juego</h2>
+        <p class="modal-body">Puntuación: {{ score }}</p>
+        <button class="btn-primary" (click)="startGame()">Reiniciar</button>
+      </div>
+    </div>
+  }
+</div>

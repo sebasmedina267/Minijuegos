@@ -1,0 +1,45 @@
+<div class="game-layout animate-fade-in">
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">Sudoku <span>🧩</span></h1>
+  </header>
+
+  <main class="game-card-flat">
+    <div class="status-hud">
+      <div class="status-item">
+        <span class="status-label">ESTADO</span>
+        <span class="status-value" [class.error-text]="error">
+          {{ mensaje || 'Pulsa en una celda' }}
+        </span>
+      </div>
+
+      <button class="btn-primary"
+        (click)="sudokuService.inicializarTablero(); tablero = sudokuService.tablero">
+        Reiniciar
+      </button>
+    </div>
+
+    <div class="sudoku-container">
+      <div class="tablero glass">
+
+        @for (fila of tablero; let i = $index; track i) {
+          <div class="fila">
+
+            @for (celda of fila; let j = $index; track j) {
+              <input
+                [value]="celda !== 0 ? celda : ''"
+                (input)="actualizarCelda($event, i, j)"
+                maxlength="1"
+                class="celda"
+                [class.predefined]="sudokuService.tablero[i][j] !== 0"
+                [readonly]="sudokuService.tablero[i][j] !== 0"
+              />
+            }
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </main>
+</div>

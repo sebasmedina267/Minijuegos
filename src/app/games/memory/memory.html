@@ -1,0 +1,52 @@
+<div class="game-layout animate-fade-in">
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">Memoria <span>🧠</span></h1>
+  </header>
+
+  <main class="game-card-flat">
+    <div class="status-hud">
+      <div class="status-item">
+        <span class="status-label">MOVIMIENTOS</span>
+        <span class="status-value">{{ moves }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">PAREJAS</span>
+        <span class="status-value">{{ matches }} / 8</span>
+      </div>
+      <button class="btn-primary" (click)="startGame()">Reiniciar</button>
+    </div>
+
+    <div class="grid-container">
+      <div class="memory-grid">
+
+        @for (card of cards; track card.id ?? $index) {
+          <div
+            class="card-wrapper"
+            (click)="flipCard(card)"
+          >
+            <div
+              class="card"
+              [class.flipped]="card.flipped || card.matched"
+              [class.matched]="card.matched"
+            >
+              <div class="card-front">❓</div>
+              <div class="card-back">{{ card.value }}</div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  </main>
+
+  @if (allMatched()) {
+    <div class="modal-overlay animate-fade-in">
+      <div class="modal-content glass">
+        <h2 class="modal-title">¡Victoria! 🎉</h2>
+        <p class="modal-body">Completado en {{ moves }} movimientos</p>
+        <button class="btn-primary" (click)="startGame()">Jugar de nuevo</button>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,54 @@
+<div class="game-layout animate-fade-in">
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">Tetris <span>🧱</span></h1>
+  </header>
+
+  <main class="game-card-flat">
+    <div class="status-hud">
+      <div class="status-item">
+        <span class="status-label">PUNTOS</span>
+        <span class="status-value">{{ score }}</span>
+      </div>
+      <button class="btn-primary" (click)="restartGame()">Reiniciar</button>
+    </div>
+
+    <div class="grid-container">
+      <div class="tetris-board">
+
+        @for (row of board; let y = $index; track y) {
+          <div class="row">
+
+            @for (cell of row; let x = $index; track x) {
+              <div
+                class="cell"
+                [ngClass]="{
+                  'color-1': getColorAt(x, y) === 1,
+                  'color-2': getColorAt(x, y) === 2,
+                  'color-3': getColorAt(x, y) === 3,
+                  'color-4': getColorAt(x, y) === 4,
+                  'color-5': getColorAt(x, y) === 5,
+                  'color-6': getColorAt(x, y) === 6,
+                  'color-7': getColorAt(x, y) === 7
+                }"
+                [class.active]="getColorAt(x, y) > 0"
+              ></div>
+            }
+
+          </div>
+        }
+
+      </div>
+    </div>
+  </main>
+
+  @if (gameOver) {
+    <div class="modal-overlay animate-fade-in">
+      <div class="modal-content glass">
+        <h2 class="modal-title">Juego Terminado</h2>
+        <p class="modal-body">Puntuación final: {{ score }}</p>
+        <button class="btn-primary" (click)="restartGame()">Jugar de nuevo</button>
+      </div>
+    </div>
+  }
+</div>

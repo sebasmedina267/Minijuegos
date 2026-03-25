@@ -1,0 +1,73 @@
+<div class="game-layout animate-fade-in">
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">Buscaminas <span>💣</span></h1>
+  </header>
+
+  <main class="game-card-flat">
+    <div class="status-hud">
+      <div class="status-item">
+        <span class="status-label">MINAS</span>
+        <span class="status-value">{{ minesLeft }}</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">TIEMPO</span>
+        <span class="status-value">{{ timer }}s</span>
+      </div>
+      <button class="btn-primary" (click)="initGame()">Reiniciar</button>
+    </div>
+
+    <div class="grid-container">
+      <div class="grid" [style.grid-template-columns]="'repeat(' + cols + ', 1fr)'">
+
+        @for (row of grid; let r = $index; track r) {
+          @for (cell of row; let c = $index; track c) {
+            <div
+              class="cell glass"
+              [class.revealed]="cell.isRevealed"
+              [class.mine]="cell.isRevealed && cell.isMine"
+              [class.flagged]="cell.isFlagged"
+              [attr.data-neighbors]="cell.neighborMines"
+              (click)="onCellClick(r, c)"
+              (contextmenu)="onRightClick($event, r, c)"
+            >
+
+              @if (cell.isRevealed && cell.isMine) {
+                <span>💣</span>
+              }
+
+              @if (cell.isRevealed && !cell.isMine && cell.neighborMines > 0) {
+                <span>{{ cell.neighborMines }}</span>
+              }
+
+              @if (!cell.isRevealed && cell.isFlagged) {
+                <span>🚩</span>
+              }
+
+            </div>
+          }
+        }
+
+      </div>
+    </div>
+
+    @if (gameOver || gameWon) {
+      <div class="modal-overlay animate-fade-in">
+        <div class="modal-content glass">
+
+          @if (gameOver) {
+            <h2 class="modal-title">¡BOOM!</h2>
+          }
+
+          @if (gameWon) {
+            <h2 class="modal-title">¡Victoria! 🎉</h2>
+          }
+
+          <p class="modal-body">Tiempo: {{ timer }} segundos</p>
+          <button class="btn-primary" (click)="initGame()">Jugar de nuevo</button>
+        </div>
+      </div>
+    }
+
+  </main>
+</div>

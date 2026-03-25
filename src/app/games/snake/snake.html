@@ -1,0 +1,25 @@
+<div class="container">
+  <canvas #canvas></canvas>
+
+  @if (!started) {
+    <button class="start-button" (click)="startGame()">START</button>
+  }
+
+  @if (started && !gameOver) {
+    <button class="pause-button" (click)="togglePause()">
+      {{ paused ? 'RESUME' : 'PAUSE' }}
+    </button>
+  }
+
+  <button class="back-button" routerLink="/">← Home</button>
+
+  <!-- Modal Game Over -->
+  <div class="modal" [class.show]="gameOver">
+    <div class="modal-content">
+      <h2>GAME OVER</h2>
+      <p>Puntuación: {{ score }}</p>
+      <button (click)="restart()">Reiniciar</button>
+      <button routerLink="/" class="back-button">← Home</button>
+    </div>
+  </div>
+</div>

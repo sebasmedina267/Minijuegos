@@ -1,0 +1,9 @@
+<button
+  class="cell"
+  [class.cell-x]="value === 'X'"
+  [class.cell-o]="value === 'O'"
+  [class.win]="isWinningCell"
+  (click)="onClick()"
+>
+  {{ value }}
+</button>

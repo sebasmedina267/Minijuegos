@@ -1,0 +1,70 @@
+<div class="game-layout animate-fade-in">
+
+  <!-- HEADER -->
+  <header class="game-header">
+    <a routerLink="/" class="back-btn">← Volver</a>
+    <h1 class="logo">PONG<span>⚡</span></h1>
+  </header>
+
+  <main class="game-wrapper">
+
+    <!-- HUD OVERLAY -->
+    @if (gameStarted) {
+      <div class="status-hud">
+        <div class="status-item">
+          <span class="status-label">Jugador</span>
+          <span class="status-value" style="color: var(--primary)">{{ playerScore }}</span>
+        </div>
+
+        <div class="status-item">
+          <span class="status-label">Tiempo</span>
+          <span class="status-value" style="color: var(--accent)">{{ timeLeft }}s</span>
+        </div>
+
+        <div class="status-item">
+          <span class="status-label">IA</span>
+          <span class="status-value" style="color: var(--secondary)">{{ aiScore }}</span>
+        </div>
+      </div>
+    }
+
+    <!-- MAIN GAME AREA -->
+    <div class="game-container animate-fade-in">
+
+      <!-- START SCREEN -->
+      @if (!gameStarted) {
+        <div class="modal-overlay animate-fade-in">
+          <div class="modal-content glass">
+            <h2 class="modal-title">Selecciona dificultad</h2>
+
+            <div class="difficulty-buttons">
+              <button (click)="changeDifficulty('easy')" [class.active]="difficulty==='easy'">Fácil</button>
+              <button (click)="changeDifficulty('normal')" [class.active]="difficulty==='normal'">Normal</button>
+              <button (click)="changeDifficulty('hard')" [class.active]="difficulty==='hard'">Difícil</button>
+            </div>
+
+            <button class="btn-primary" style="margin-top: 2rem;" (click)="startGame()">START GAME</button>
+          </div>
+        </div>
+      }
+
+      <!-- CANVAS WRAPPER -->
+      <div class="canvas-wrapper" [class.blur]="!gameStarted || gameEnded">
+        <canvas #gameCanvas></canvas>
+      </div>
+
+      <!-- GAME OVER -->
+      @if (gameEnded) {
+        <div class="modal-overlay animate-fade-in">
+          <div class="modal-content glass">
+            <h2 class="modal-title">Fin del juego</h2>
+            <p class="modal-body">{{ playerScore }} - {{ aiScore }}</p>
+            <button class="btn-primary" (click)="resetGame()">Reiniciar</button>
+          </div>
+        </div>
+      }
+
+    </div>
+
+  </main>
+</div>

@@ -1,0 +1,53 @@
+<div class="home-wrapper">
+
+  <!-- Hero Section -->
+  @if (!hasChildRoute) {
+    <header class="hero">
+      <div class="hero-content animate-fade-in">
+        <h1 class="title">Mini<span>juegos</span></h1>
+        <p class="subtitle">La colección definitiva de clásicos arcade</p>
+      </div>
+    </header>
+  }
+
+  <!-- Games Grid -->
+  <main class="content-container">
+
+    @if (!hasChildRoute) {
+      <div class="games-grid">
+
+        @for (game of games; let i = $index; track i) {
+          <a
+            [routerLink]="game.disabled ? null : game.path"
+            class="game-card glass animate-fade-in"
+            [style.--delay]="i * 0.1 + 's'"
+            [style.--accent-color]="game.color"
+            [class.disabled]="game.disabled"
+          >
+            <div class="card-background"></div>
+            <div class="card-glow"></div>
+
+            <div class="card-content">
+              <div class="game-icon-container">
+                <div class="icon-blur"></div>
+                <span class="game-icon">{{ game.icon }}</span>
+              </div>
+
+              <div class="game-info">
+                <span class="game-category">ARCADE</span>
+                <h2 class="game-name">{{ game.name }}</h2>
+                <div class="play-action">
+                  <span>Jugar ahora</span>
+                  <i class="arrow-icon">→</i>
+                </div>
+              </div>
+            </div>
+          </a>
+        }
+
+      </div>
+    }
+
+    <router-outlet></router-outlet>
+  </main>
+</div>
