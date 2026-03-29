@@ -1,6 +1,8 @@
-import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TetrisService } from './services/tetris.service';
+import { TetrisState } from './models/tetris-state.model';
 
 @Component({
   selector: 'app-tetris',
@@ -10,45 +12,34 @@ import { RouterLink } from '@angular/router';
   styleUrl: './tetris.css',
 })
 export class Tetris implements OnInit, OnDestroy {
-  rows = 20;
-  cols = 10;
-  board: number[][] = [];
-  score = 0;
 
-  pieces = [
-    { shape: [[1,1,1,1]], color: 1 },
-    { shape: [[1,1],[1,1]], color: 2 },
-    { shape: [[0,1,0],[1,1,1]], color: 3 },
-    { shape: [[1,0,0],[1,1,1]], color: 4 },
-    { shape: [[0,0,1],[1,1,1]], color: 5 },
-    { shape: [[1,1,0],[0,1,1]], color: 6 },
-    { shape: [[0,1,1],[1,1,0]], color: 7 }
-  ];
+  state!: TetrisState;
 
-  currentPiece: number[][] = [];
-  currentColor = 0;
-
-  posX = 0;
-  posY = 0;
-
-  gameOver = false;
-
-  lockDelay = 300;
-  lockTimer: any = null;
   gravityTimer: any = null;
+  lockTimer: any = null;
 
-  cdr = inject(ChangeDetectorRef);
+  private cdr = inject(ChangeDetectorRef);
+  private game = inject(TetrisService);
 
+  // Touch gesture tracking for mobile controls.
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchEndX = 0;
+  private touchEndY = 0;
+
+  /**
+   * Starts a new game when the component loads.
+   */
   ngOnInit(): void {
     this.startGame();
   }
 
-
+  /**
+   * Resets the game state and spawns the first piece.
+   */
   startGame() {
-    this.gameOver = false;
-    this.score = 0;
-    this.resetBoard();
-    this.spawnPiece();
+    this.state = this.game.createInitialState();
+    this.state = this.game.spawnPiece(this.state);
     this.startGravity();
   }
 
@@ -56,189 +47,176 @@ export class Tetris implements OnInit, OnDestroy {
     this.startGame();
   }
 
-  resetBoard() {
-    this.board = Array.from({ length: this.rows }, () =>
-      Array(this.cols).fill(0)
-    );
-  }
-
-  spawnPiece() {
-    const random = this.pieces[Math.floor(Math.random() * this.pieces.length)];
-
-    this.currentPiece = JSON.parse(JSON.stringify(random.shape));
-    this.currentColor = random.color;
-
-    this.posX = Math.floor(this.cols / 2) - 2;
-    this.posY = 0;
-
-    if (this.collides()) {
-      this.gameOver = true;
-    }
-  }
-
-  collides(offsetX = 0, offsetY = 0, piece = this.currentPiece) {
-    for (let y = 0; y < piece.length; y++) {
-      for (let x = 0; x < piece[y].length; x++) {
-        if (piece[y][x]) {
-          const newX = this.posX + x + offsetX;
-          const newY = this.posY + y + offsetY;
-
-          if (
-            newX < 0 ||
-            newX >= this.cols ||
-            newY >= this.rows ||
-            (newY >= 0 && this.board[newY][newX] !== 0)
-          ) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  mergePiece() {
-    for (let y = 0; y < this.currentPiece.length; y++) {
-      for (let x = 0; x < this.currentPiece[y].length; x++) {
-        if (this.currentPiece[y][x]) {
-          this.board[this.posY + y][this.posX + x] = this.currentColor;
-        }
-      }
-    }
-  }
-
-  clearLines() {
-    let cleared = 0;
-
-    for (let y = this.rows - 1; y >= 0; y--) {
-      let full = true;
-
-      for (let x = 0; x < this.cols; x++) {
-        if (this.getColorAt(x, y) === 0) {
-          full = false;
-          break;
-        }
-      }
-
-      if (full) {
-        this.board.splice(y, 1);
-        this.board.unshift(Array(this.cols).fill(0));
-        cleared++;
-        y++;
-      }
-    }
-
-    if (cleared > 0) {
-      this.score += cleared * 100;
-    }
-  }
-
-  moveDown() {
-    if (this.gameOver) return;
-
-    if (!this.collides(0, 1)) {
-      this.posY++;
-
-      if (this.lockTimer) {
-        clearTimeout(this.lockTimer);
-        this.lockTimer = null;
-      }
-
-    } else {
-      if (!this.lockTimer) {
-        this.lockTimer = setTimeout(() => {
-          this.mergePiece();
-          this.clearLines();
-          this.spawnPiece();
-          this.lockTimer = null;
-          this.cdr.detectChanges();
-        }, this.lockDelay);
-      }
-    }
-    this.cdr.detectChanges();
-  }
-
+  /**
+   * Handles the automatic downward movement of the piece.
+   * This runs on an interval until the game ends.
+   */
   startGravity() {
     if (this.gravityTimer) clearInterval(this.gravityTimer);
+
     this.gravityTimer = setInterval(() => {
-      if (!this.gameOver) {
-        this.moveDown();
-        this.cdr.detectChanges();
+      if (this.state.gameOver) return;
+
+      const result = this.game.moveDown(this.state);
+
+      if (!result.locked) {
+        this.state = result.state;
       } else {
-        clearInterval(this.gravityTimer);
+        this.state = this.game.mergePiece(this.state);
+        this.state = this.game.clearLines(this.state);
+        this.state = this.game.spawnPiece(this.state);
       }
-    }, 1000);
+
+      this.cdr.detectChanges();
+    }, 800);
   }
 
   moveLeft() {
-    if (!this.collides(-1, 0)) {
-      this.posX--;
-      if (this.lockTimer) {
-        clearTimeout(this.lockTimer);
-        this.lockTimer = null;
-      }
-    }
+    this.state = this.game.moveLeft(this.state);
+    this.cdr.detectChanges();
   }
 
   moveRight() {
-    if (!this.collides(1, 0)) {
-      this.posX++;
-      if (this.lockTimer) {
-        clearTimeout(this.lockTimer);
-        this.lockTimer = null;
-      }
-    }
+    this.state = this.game.moveRight(this.state);
+    this.cdr.detectChanges();
   }
 
   rotate() {
-    const rotated = this.currentPiece[0].map((_, i) =>
-      this.currentPiece.map(row => row[i]).reverse()
-    );
-
-    if (!this.collides(0, 0, rotated)) {
-      this.currentPiece = rotated;
-
-      if (this.lockTimer) {
-        clearTimeout(this.lockTimer);
-        this.lockTimer = null;
-      }
-      this.cdr.detectChanges();
-    }
+    this.state = this.game.rotate(this.state);
+    this.cdr.detectChanges();
   }
 
-  getColorAt(x: number, y: number): number {
-    let color = this.board[y][x];
+  moveDown() {
+    const result = this.game.moveDown(this.state);
 
-    if (
-      y >= this.posY &&
-      y < this.posY + this.currentPiece.length &&
-      x >= this.posX &&
-      x < this.posX + this.currentPiece[0].length &&
-      this.currentPiece[y - this.posY][x - this.posX] === 1
-    ) {
-      color = this.currentColor;
+    if (!result.locked) {
+      this.state = result.state;
+    } else {
+      this.state = this.game.mergePiece(this.state);
+      this.state = this.game.clearLines(this.state);
+      this.state = this.game.spawnPiece(this.state);
     }
 
-    return color;
+    this.cdr.detectChanges();
   }
 
+  /**
+   * Keyboard controls for desktop users.
+   * Arrow keys move or rotate the piece.
+   */
   @HostListener('window:keydown', ['$event'])
   handleKey(event: KeyboardEvent) {
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
       event.preventDefault();
     }
 
-    if (this.gameOver) return;
+    if (this.state.gameOver) return;
 
     if (event.key === 'ArrowLeft') this.moveLeft();
     if (event.key === 'ArrowRight') this.moveRight();
     if (event.key === 'ArrowDown') this.moveDown();
     if (event.key === 'ArrowUp') this.rotate();
-    this.cdr.detectChanges();
   }
 
+  /**
+   * Records the starting point of a swipe gesture.
+   */
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(e: TouchEvent) {
+    this.touchStartX = e.changedTouches[0].screenX;
+    this.touchStartY = e.changedTouches[0].screenY;
+  }
+
+  /**
+   * Records the end point of a swipe and triggers movement.
+   */
+  @HostListener('touchend', ['$event'])
+  onTouchEnd(e: TouchEvent) {
+    this.touchEndX = e.changedTouches[0].screenX;
+    this.touchEndY = e.changedTouches[0].screenY;
+    this.handleSwipe();
+  }
+
+  /**
+   * Detects swipe direction and maps it to Tetris actions.
+   * Horizontal = move left/right
+   * Vertical up = rotate
+   * Vertical down = soft drop
+   */
+  private handleSwipe() {
+    const dx = this.touchEndX - this.touchStartX;
+    const dy = this.touchEndY - this.touchStartY;
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (this.state.gameOver) return;
+
+    if (absDx > absDy) {
+      if (dx > 0) this.moveRight();
+      else this.moveLeft();
+    } else {
+      if (dy > 0) this.moveDown();
+      else this.rotate();
+    }
+  }
+
+  /**
+   * Cleans up timers when the component is destroyed.
+   */
   ngOnDestroy(): void {
     if (this.gravityTimer) clearInterval(this.gravityTimer);
     if (this.lockTimer) clearTimeout(this.lockTimer);
   }
+
+  /**
+ * Exposes the current score to the template.
+ * Using a getter keeps the template clean and avoids direct state access.
+ */
+get score() {
+  return this.state.score;
+}
+
+/**
+ * Exposes the board matrix so the template can render each cell.
+ */
+get board() {
+  return this.state.board;
+}
+
+/**
+ * Indicates whether the game has ended.
+ * Used by the template to show the game-over modal.
+ */
+get gameOver() {
+  return this.state.gameOver;
+}
+
+/**
+ * Returns the color value for a given board coordinate.
+ * This method checks both the locked blocks on the board and the active falling piece.
+ * If the active piece overlaps the requested cell, its color takes priority.
+ */
+getColorAt(x: number, y: number): number {
+  // Base color from the board (locked blocks)
+  let color = this.state.board[y][x];
+
+  const piece = this.state.currentPiece;
+  const posX = this.state.posX;
+  const posY = this.state.posY;
+
+  // Check if the active piece occupies this cell
+  if (
+    y >= posY &&
+    y < posY + piece.length &&
+    x >= posX &&
+    x < posX + piece[0].length &&
+    piece[y - posY][x - posX] === 1
+  ) {
+    color = this.state.currentColor;
+  }
+
+  return color;
+}
+
 }
