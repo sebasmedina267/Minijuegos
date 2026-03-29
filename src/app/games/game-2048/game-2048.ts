@@ -1,11 +1,8 @@
 import { Component, HostListener, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-
-interface Tile {
-  value: number;
-  merged?: boolean;
-}
+import { Game2048Service, Direction } from './services/game-2048.service';
+import { GameState } from './models/game-state.model';
 
 @Component({
   selector: 'app-game-2048',
@@ -15,131 +12,60 @@ interface Tile {
   styleUrls: ['./game-2048.css'],
 })
 export class Game2048 {
-  size = 4;
-  grid: Tile[][] = [];
-  score = 0;
-  gameOver = false;
-  started = false;
-  paused = false;
+  state!: GameState;
 
-  cdr = inject(ChangeDetectorRef);
+  private cdr = inject(ChangeDetectorRef);
+  private game = inject(Game2048Service);
+
+  // Touch coordinates used to detect swipe gestures on mobile devices.
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchEndX = 0;
+  private touchEndY = 0;
 
   constructor() {
-    this.initGrid();
+    // Initialize the game with an empty board.
+    this.state = this.game.createInitialState(4);
   }
 
-  /* =================== INICIALIZAR TABLERO =================== */
-  initGrid() {
-    this.grid = Array.from({ length: this.size }, () =>
-      Array.from({ length: this.size }, () => ({ value: 0 }))
-    );
-    this.score = 0;
-    this.gameOver = false;
-    this.started = false;
-    this.paused = false;
-  }
-
-  /* =================== INICIAR JUEGO =================== */
+  /**
+   * Starts or restarts the game.
+   * Resets the board and places the first two tiles.
+   */
   startGame() {
-    this.initGrid();
-    this.addRandomTile();
-    this.addRandomTile();
-    this.started = true;
-    this.paused = false;
+    this.state = this.game.start(this.state);
     this.cdr.detectChanges();
   }
 
-  /* =================== MOVIMIENTOS =================== */
-  move(dir: 'up' | 'down' | 'left' | 'right') {
-    if (!this.started || this.gameOver || this.paused) return;
-
-    let moved = false;
-    this.resetMergeFlags();
-
-    const rotate = (times: number) => {
-      for (let t = 0; t < times; t++) {
-        this.grid = this.grid[0].map((_, i) =>
-          this.grid.map((row) => row[i]).reverse()
-        );
-      }
-    };
-
-    switch (dir) {
-      case 'up': rotate(1); break;
-      case 'right': rotate(2); break;
-      case 'down': rotate(3); break;
-    }
-
-    for (let row = 0; row < this.size; row++) {
-      let line = this.grid[row].filter((tile) => tile.value !== 0);
-      for (let i = 0; i < line.length - 1; i++) {
-        if (line[i].value === line[i + 1].value && !line[i].merged && !line[i + 1].merged) {
-          line[i].value *= 2;
-          line[i].merged = true;
-          line.splice(i + 1, 1);
-          this.score += line[i].value;
-        }
-      }
-      while (line.length < this.size) line.push({ value: 0 });
-      moved = moved || !line.every((tile, i) => tile.value === this.grid[row][i].value);
-      this.grid[row] = line;
-    }
-
-    switch (dir) {
-      case 'up': rotate(3); break;
-      case 'right': rotate(2); break;
-      case 'down': rotate(1); break;
-    }
-
-    if (moved) this.addRandomTile();
-    this.checkGameOver();
+  /**
+   * Applies a movement in the given direction.
+   * The actual game logic is handled by the service.
+   */
+  move(dir: Direction) {
+    this.state = this.game.move(this.state, dir);
     this.cdr.detectChanges();
   }
 
-  resetMergeFlags() {
-    this.grid.forEach((row) => row.forEach((tile) => (tile.merged = false)));
-  }
-
-  addRandomTile() {
-    const empty: { x: number; y: number }[] = [];
-    this.grid.forEach((row, y) =>
-      row.forEach((tile, x) => {
-        if (tile.value === 0) empty.push({ x, y });
-      })
-    );
-    if (empty.length === 0) return;
-    const { x, y } = empty[Math.floor(Math.random() * empty.length)];
-    this.grid[y][x].value = Math.random() < 0.9 ? 2 : 4;
-  }
-
-  /* =================== GAME OVER =================== */
-  checkGameOver() {
-    const hasZero = this.grid.some((row) => row.some((tile) => tile.value === 0));
-    if (hasZero) return;
-
-    for (let y = 0; y < this.size; y++) {
-      for (let x = 0; x < this.size; x++) {
-        const tile = this.grid[y][x];
-        if (
-          (x < this.size - 1 && tile.value === this.grid[y][x + 1].value) ||
-          (y < this.size - 1 && tile.value === this.grid[y + 1][x].value)
-        ) return;
-      }
-    }
-    this.gameOver = true;
-  }
-
-  /* =================== PAUSA =================== */
+  /**
+   * Toggles the pause state.
+   */
   togglePause() {
-    if (!this.started || this.gameOver) return;
-    this.paused = !this.paused;
+    this.state = this.game.togglePause(this.state);
     this.cdr.detectChanges();
   }
 
-  /* =================== TECLAS =================== */
+  /**
+   * Handles keyboard input.
+   * Arrow keys trigger movement, and 'p' toggles pause.
+   * Prevents the browser from scrolling when using arrow keys.
+   */
   @HostListener('window:keydown', ['$event'])
   onKey(e: KeyboardEvent) {
-    if (!this.started || this.paused || this.gameOver) return;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+      e.preventDefault();
+    }
+
+    if (!this.state.started || this.state.paused || this.state.gameOver) return;
 
     switch (e.key) {
       case 'ArrowUp': this.move('up'); break;
@@ -149,4 +75,54 @@ export class Game2048 {
       case 'p': this.togglePause(); break;
     }
   }
+
+  /**
+   * Stores the initial touch position when the user starts a swipe.
+   */
+  @HostListener('touchstart', ['$event'])
+  onTouchStart(e: TouchEvent) {
+    this.touchStartX = e.changedTouches[0].screenX;
+    this.touchStartY = e.changedTouches[0].screenY;
+  }
+
+  /**
+   * Stores the final touch position and triggers swipe detection.
+   */
+  @HostListener('touchend', ['$event'])
+  onTouchEnd(e: TouchEvent) {
+    this.touchEndX = e.changedTouches[0].screenX;
+    this.touchEndY = e.changedTouches[0].screenY;
+    this.handleSwipe();
+  }
+
+  /**
+   * Detects the direction of a swipe gesture.
+   * Horizontal swipes move left/right, vertical swipes move up/down.
+   */
+  private handleSwipe() {
+    const dx = this.touchEndX - this.touchStartX;
+    const dy = this.touchEndY - this.touchStartY;
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (!this.state.started || this.state.paused || this.state.gameOver) return;
+
+    if (absDx > absDy) {
+      // Horizontal swipe
+      if (dx > 0) this.move('right');
+      else this.move('left');
+    } else {
+      // Vertical swipe
+      if (dy > 0) this.move('down');
+      else this.move('up');
+    }
+  }
+
+  // Getters used by the template for cleaner bindings.
+  get grid() { return this.state.grid; }
+  get score() { return this.state.score; }
+  get gameOver() { return this.state.gameOver; }
+  get started() { return this.state.started; }
+  get paused() { return this.state.paused; }
 }
