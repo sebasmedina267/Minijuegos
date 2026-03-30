@@ -1,25 +1,36 @@
-<div class="container">
+<div class="game-wrapper">
+
+  <!-- HUD -->
+  <div class="hud">
+
+    @if (!started) {
+      <button class="btn primary" (click)="startGame()">START</button>
+    }
+
+    @if (started && !gameOver) {
+      <button class="btn secondary" (click)="togglePause()">
+        {{ paused ? 'RESUME' : 'PAUSE' }}
+      </button>
+    }
+
+    <button class="btn back" routerLink="/">←</button>
+
+  </div>
+
+  <!-- Canvas -->
   <canvas #canvas></canvas>
 
-  @if (!started) {
-    <button class="start-button" (click)="startGame()">START</button>
-  }
-
-  @if (started && !gameOver) {
-    <button class="pause-button" (click)="togglePause()">
-      {{ paused ? 'RESUME' : 'PAUSE' }}
-    </button>
-  }
-
-  <button class="back-button" routerLink="/">← Home</button>
-
-  <!-- Modal Game Over -->
+  <!-- Modal -->
   <div class="modal" [class.show]="gameOver">
     <div class="modal-content">
       <h2>GAME OVER</h2>
       <p>Puntuación: {{ score }}</p>
-      <button (click)="restart()">Reiniciar</button>
-      <button routerLink="/" class="back-button">← Home</button>
+
+      <div class="modal-actions">
+        <button class="btn primary" (click)="restart()">Reiniciar</button>
+        <button class="btn secondary" routerLink="/">Home</button>
+      </div>
     </div>
   </div>
+
 </div>
