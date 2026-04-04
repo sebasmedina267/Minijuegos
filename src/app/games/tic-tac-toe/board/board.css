@@ -1,7 +1,25 @@
 .board {
   display: grid;
-  grid-template-columns: repeat(3, 110px);
-  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3vw;
+  width: 90vw;
+  max-width: 340px;
   justify-content: center;
   margin: 0 auto;
+}
+
+
+@media (min-width: 600px) {
+  .board {
+    grid-template-columns: repeat(3, 100px);
+    gap: 10px;
+    width: auto;
+  }
+}
+
+
+@media (min-width: 900px) {
+  .board {
+    grid-template-columns: repeat(3, 110px);
+  }
 }
