@@ -7,10 +7,23 @@
   <main class="game-card-flat">
     <div class="status-hud">
       <div class="status-item">
+        <span class="status-label">MODO</span>
+        <span class="status-value">
+          {{ game.isVsAI ? 'Jugador vs IA' : 'Jugador vs Jugador' }}
+        </span>
+      </div>
+
+      <div class="status-item">
         <span class="status-label">ESTADO</span>
         <span class="status-value">{{ status }}</span>
       </div>
-      <button class="btn-primary" (click)="reset()">Reiniciar</button>
+
+      <div class="status-actions">
+        <button class="btn-mode" (click)="toggleAI()">
+          {{ game.isVsAI ? 'Cambiar a 2 jugadores' : 'Cambiar a IA' }}
+        </button>
+        <button class="btn-primary" (click)="reset()">Reiniciar</button>
+      </div>
     </div>
 
     <div class="board-container">
@@ -21,7 +34,6 @@
   @if (game.winner || (game.isDraw && !game.winner)) {
     <div class="modal-overlay animate-fade-in">
       <div class="modal-content glass">
-
         @if (game.winner) {
           <h2 class="modal-title">¡Victoria de {{ game.winner }}!</h2>
         }
