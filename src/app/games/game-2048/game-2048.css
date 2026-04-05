@@ -13,6 +13,7 @@
   border-radius: var(--radius-lg);
   border: 4px solid var(--glass-border);
   box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  touch-action: none;
 }
 
 .grid-row {

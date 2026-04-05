@@ -1,4 +1,4 @@
-import { Component, HostListener, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, HostListener, ChangeDetectorRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Game2048Service, Direction } from './services/game-2048.service';
@@ -11,7 +11,7 @@ import { GameState } from './models/game-state.model';
   templateUrl: './game-2048.html',
   styleUrls: ['./game-2048.css'],
 })
-export class Game2048 {
+export class Game2048 implements OnInit {
   state!: GameState;
 
   private cdr = inject(ChangeDetectorRef);
@@ -26,6 +26,18 @@ export class Game2048 {
   constructor() {
     // Initialize the game with an empty board.
     this.state = this.game.createInitialState(4);
+  }
+
+  /**
+   * Prevents the browser from scrolling when swiping on mobile.
+   * This ensures a native app-like experience.
+   */
+  ngOnInit() {
+    document.addEventListener(
+      'touchmove',
+      (e) => e.preventDefault(),
+      { passive: false } // 🔥 required for preventDefault to work
+    );
   }
 
   /**
@@ -81,6 +93,7 @@ export class Game2048 {
    */
   @HostListener('touchstart', ['$event'])
   onTouchStart(e: TouchEvent) {
+    e.preventDefault(); // 🔥 prevents scroll
     this.touchStartX = e.changedTouches[0].screenX;
     this.touchStartY = e.changedTouches[0].screenY;
   }
@@ -90,6 +103,7 @@ export class Game2048 {
    */
   @HostListener('touchend', ['$event'])
   onTouchEnd(e: TouchEvent) {
+    e.preventDefault(); // 🔥 prevents scroll
     this.touchEndX = e.changedTouches[0].screenX;
     this.touchEndY = e.changedTouches[0].screenY;
     this.handleSwipe();
@@ -106,16 +120,18 @@ export class Game2048 {
     const absDx = Math.abs(dx);
     const absDy = Math.abs(dy);
 
+    const threshold = 30; // 🔥 minimum distance to trigger swipe
+
     if (!this.state.started || this.state.paused || this.state.gameOver) return;
 
     if (absDx > absDy) {
       // Horizontal swipe
-      if (dx > 0) this.move('right');
-      else this.move('left');
+      if (dx > threshold) this.move('right');
+      else if (dx < -threshold) this.move('left');
     } else {
       // Vertical swipe
-      if (dy > 0) this.move('down');
-      else this.move('up');
+      if (dy > threshold) this.move('down');
+      else if (dy < -threshold) this.move('up');
     }
   }
 
